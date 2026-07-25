@@ -74,6 +74,7 @@ jobs:
             vendor/kona-perf_defconfig
             vendor/oplus.config
             kernelsu.config
+            container.config
         run: |
           export PATH=$GITHUB_WORKSPACE/clang/bin:$PATH
           export KBUILD_BUILD_USER=${{ github.repository_owner }}
