@@ -102,11 +102,7 @@ jobs:
           cat >anykernel.sh <<EOF
           properties() { '
           kernel.string=Kernel for OnePlus8/8T/8Pro/9R
-          device.name1=instantnoodle
-          device.name2=instantnoodlep
-          device.name3=kebab
-          device.name4=lemonades
-          do.devicecheck=1
+          do.devicecheck=0
           '; }
           BLOCK=auto;
           IS_SLOT_DEVICE=auto;
