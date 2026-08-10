@@ -109,7 +109,7 @@ jobs:
           . tools/ak3-core.sh
           split_boot
           flash_boot
-          flash_dtbo
+          flash_generic dtbo
           EOF
           zip -qr9 Anykernel3.zip * -x .git .github README.md LICENSE *placeholder
 
