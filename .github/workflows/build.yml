@@ -84,7 +84,7 @@ jobs:
           mkdir -p dist
           find out/arch/arm64/boot/dts -name "*.dtb" | xargs cat > dist/dtb
           find out/arch/arm64/boot/dts -name "*.dtbo" | \
-          xargs python3 scripts/mkdtboimg.py create dist/dtbo --page_size=4096
+          xargs python3 scripts/mkdtboimg.py create dist/dtbo.img --page_size=4096
           cp out/arch/arm64/boot/Image dist/Image
           find out/ -name "*.ko" -exec cp {} dist/ \;
           cp out/System.map dist/
@@ -95,16 +95,12 @@ jobs:
           git clone https://github.com/osm0sis/AnyKernel3 --depth=1 ak3
           cp kernel/dist/Image ak3/
           cp kernel/dist/dtb ak3/
-          cp kernel/dist/dtbo ak3/
+          cp kernel/dist/dtbo.img ak3/
           cd ak3
           cat >anykernel.sh <<EOF
           properties() { '
           kernel.string=Kernel for OnePlus8/8T/8Pro/9R
-          device.name1=instantnoodle
-          device.name2=instantnoodlep
-          device.name3=kebab
-          device.name4=lemonades
-          do.devicecheck=1
+          do.devicecheck=0
           '; }
           BLOCK=auto;
           IS_SLOT_DEVICE=auto;
