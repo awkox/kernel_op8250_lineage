@@ -21,8 +21,7 @@ jobs:
         if: env.PACKAGES != ''
         env:
           PACKAGES:
-            # ccache
-            # wget
+            device-tree-compiler
         run: |
           sudo apt-get update  -y -q
           sudo apt-get install -y -q ${{ env.PACKAGES }}
@@ -82,6 +81,7 @@ jobs:
           export KBUILD_BUILD_HOST=github-runner
           export KBUILD_BUILD_TIMESTAMP=`date -u -d "@$(git log -1 --format=%at)" +"%a %b %d %H:%M:%S %Z %Y"`
           make ${{ env.MAKE_ARGS }} ${{ env.CONFIG_FILES }} all
+          make DTC=dtc ${{ env.MAKE_ARGS }} dtbs
 
           mkdir -p dist
           find out/arch/arm64/boot/dts -name "*.dtb" | xargs cat > dist/dtb
