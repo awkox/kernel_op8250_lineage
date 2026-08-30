@@ -85,7 +85,9 @@
 #include "downstream/tiny_sulog.h"
 #include "downstream/vmap_patch.h"
 
-#include "downstream/temp_patch_setgroups.h"
+#ifdef CONFIG_KSU_HOSTSREDIRECT
+#include "downstream/ksu_hostsredirect.h"
+#endif
 
 // unity build
 #include "policy/allowlist.c"
@@ -210,14 +212,15 @@ static int __init kernelsu_init(void)
 	ksu_branch_link_patch_init();
 #endif
 
-	ksu_init_setgroups_patch();
-
 	return 0;
 }
 
 #if !defined(MODULE)
 device_initcall(kernelsu_init);
 #else
+
+char ksu_block_modules[256];
+module_param_string(block_modules, ksu_block_modules, sizeof(ksu_block_modules), 0);
 #include "downstream/module_blacklist.h"
 
 #ifndef CONFIG_KSU_SHELL_HAS_SU_ALWAYS
@@ -236,6 +239,30 @@ static int __init kernelsu_lkm_init(void)
 
 	ksu_extend_module_blacklist();
 	kobject_del(&THIS_MODULE->mkobj.kobj); // tiann/KernelSU fefb02e
+
+	if (current->pid == 1)
+		return 0;
+
+	// pid not 1, late load
+	
+	escape_to_root_forced();
+
+	// turn off vfs_read hook
+	stop_vfs_read_hook();
+
+	apply_kernelsu_rules();
+	cache_sid();
+	setup_ksu_cred();
+
+	on_post_fs_data();
+	on_boot_completed();
+	
+	if (!!getenforce())
+		return 0;
+	
+	pr_info("Permissive SELinux, enforcing\n");
+	setenforce(true);
+
 	return 0;
 }
 

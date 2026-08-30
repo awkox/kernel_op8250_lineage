@@ -83,13 +83,16 @@ CFLAGS_ksu.o += $(call cc-option, -Wframe-larger-than=1024)
 # to make sure we can use builtins
 CFLAGS_REMOVE_ksu.o += -fno-builtin
 
-# a little respect to kbuild
+# Os to O2, we dont care for anything else. O3 vs O2 codegen on hotptah is same.
 ifeq ($(CONFIG_CC_OPTIMIZE_FOR_SIZE),y)
 CFLAGS_REMOVE_ksu.o += -Oz
 CFLAGS_REMOVE_ksu.o += -Os
 CFLAGS_ksu.o += -O2
-else
-CFLAGS_ksu.o += -O3
+endif
+
+# inline atomics
+ifeq ($(CONFIG_ARM64),y)
+CFLAGS_ksu.o += $(call cc-option, -mno-outline-atomics)
 endif
 
 ifneq ($(CONFIG_KSU_DEBUG),y)

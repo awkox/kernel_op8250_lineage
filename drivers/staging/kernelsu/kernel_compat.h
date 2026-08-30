@@ -119,13 +119,6 @@ static void ksu_kvfree(const void *buf)
 #define kvfree ksu_kvfree
 #endif
 
-// basic stack offload.
-static inline void kvfree_byref(void *buf) { kvfree(*(void **)buf); }
-static inline void kfree_byref(void *buf) { kfree(*(void **)buf); }
-
-#define __offstack(size) __cleanup(kfree_byref) = kmalloc(size, GFP_KERNEL)
-#define __zoffstack(size) __cleanup(kfree_byref) = kzalloc(size, GFP_KERNEL)
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 8, 0)
 __weak long copy_from_kernel_nofault(void *dst, const void *src, size_t size)
 {
@@ -425,8 +418,10 @@ struct dir_context { const filldir_t actor; loff_t pos; };
 __weak char *bin2hex(char *dst, const void *src, size_t count)
 {
 	const unsigned char *_src = src;
-	while (count--)
-		dst = pack_hex_byte(dst, *_src++);
+	while (count--) {
+		sprintf(dst, "%02x", *_src++);
+		dst = dst + 2;
+	}
 	return dst;
 }
 #endif
@@ -474,6 +469,20 @@ static inline u64 ksu_ktime_get_ns(void) { return ktime_to_ns(ktime_get()); }
 // WARNING: no overflow safety!
 #ifndef struct_size
 #define struct_size(p, member, n) (sizeof(*(p)) + (n) * sizeof(*(p)->member))
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION (3, 4, 0)
+// this is okay for current use
+// #define vm_mmap(__unused, addr, len, prot, flag, offset) sys_mmap_pgoff(addr, len, prot, flag, 0, offset >> PAGE_SHIFT)
+__weak unsigned long vm_mmap(struct file *file, unsigned long addr, unsigned long len,
+			unsigned long prot, unsigned long flags, unsigned long offset)
+{
+	// The caller must hold down_write(&current->mm->mmap_sem).
+	down_write(&current->mm->mmap_sem);
+	unsigned long ret = do_mmap_pgoff(file, addr, len, prot, flags, offset >> PAGE_SHIFT);
+	up_write(&current->mm->mmap_sem);
+	return ret;
+}
 #endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION (4, 12, 0)
